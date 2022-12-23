@@ -28,7 +28,7 @@ import "leaflet.motion/dist/leaflet.motion.js";
 import demoRoute from '../../data/demoRoute.json'
 import Fullscreen from 'react-leaflet-fullscreen-plugin';
 import "leaflet.animatedmarker/src/AnimatedMarker";
-
+import {lineString, bezierSpline} from '@turf/turf';
 const {overlay,tileLayer,markerOptions,getMidPoint} = require('../../util/assets')
 const center = [22.366904, 77.534981];
 // const shortPath =
@@ -208,7 +208,13 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
     //             // });
     //     }
     // },[map]);
-   
+   useEffect(() => {
+    if(seaRouteData.length > 0 && map) {
+        const curve = bezierSpline(lineString(seaRouteData.slice(-1)[0]));
+        const route =curve.geometry.coordinates;
+        L.polyline(route,{color:'cyan',weight:3}).addTo(map);
+    }
+   },[map,seaRouteData])
     console.log(zoom,'zoom');
     return (
         <MapContainer
@@ -291,7 +297,8 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
             </>}
             {seaRouteData && seaRouteData.length > 0 && <>
                 {seaRouteData.map((route) => {
-                    return route && route.length > 1 ? <Polyline pathOptions={{color:'#000d37',weight:1}} positions={route}/> : null;
+                    return route && route.length > 1 ? <><Polyline pathOptions={{color:'#000d37',weight:1}} positions={route}/>
+                     </>: null;
                 })}
             </>
             }
