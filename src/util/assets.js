@@ -7,6 +7,11 @@ const  markerColor= {
 module.exports = {
   tileLayer :  [
     {
+      name:'cogo-map',
+      url:'http://maps.dev.cogoport.io/hot/{z}/{x}/{y}.png',
+      attribution:'cogoport limited'
+    },
+    {
       name:'stadia',
       url:'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png',
       attribution:''

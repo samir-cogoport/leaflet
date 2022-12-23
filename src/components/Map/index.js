@@ -1,5 +1,5 @@
 import {React, useState,useEffect} from 'react';
-import { MapContainer, TileLayer ,LayersControl,ScaleControl,ZoomControl,GeoJSON,Polyline, CircleMarker} from 'react-leaflet';
+import { MapContainer, TileLayer ,LayersControl,ScaleControl,ZoomControl,GeoJSON,Polyline, CircleMarker, Marker} from 'react-leaflet';
 import ReactDOMServer from "react-dom/server";
 import 'maplibre-gl';
 import '@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl';
@@ -105,6 +105,7 @@ const sqGroup = L.motion.seq([
 
 const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoutes,curLoc, setCurLoc,seaRouteData}) => {
     const [map, setMap] = useState(null);
+    const [zoom, setZoom] = useState(5);
     console.log(curLoc, 'curloc');
     // const mb = L.tileLayer.mbTiles('../../data/countries-raster.mbtiles', {
 	// 	minZoom: 0,
@@ -144,14 +145,14 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
         div.innerHTML = "+Add to queue";
         div.className = 'add-to-queue';
         div.onclick = () =>  {
-            setCurLoc((prev) => ([...prev, [latlng.lat,latlng.lng]]))
+            setCurLoc((prev) => ([...prev, {name:feature.properties.PORT_NAME,coordinates:[latlng.lat,latlng.lng]}]))
             map.closePopup();
         }
         return L.circleMarker(latlng, {
             fillColor:feature?.properties?.PORT_NAME ? '#000d37' : '#ff5722',
             color:'#f6f7f9',
             weight:1,
-            radius:7,
+            radius:6,
             fillOpacity:0.95,
         }).bindPopup(div)
 
@@ -172,6 +173,9 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
         //     customPopup.setLatLng(e.latlng);
         //     map.openPopup(customPopup);
         // });
+        map.on('zoomend',() => {
+            setZoom(map.getZoom());
+        })
         setMap(map);
     }
     useEffect(() => {
@@ -205,7 +209,7 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
     //     }
     // },[map]);
    
-    
+    console.log(zoom,'zoom');
     return (
         <MapContainer
             preferCanvas={true}
@@ -252,7 +256,7 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
             })}
             </LayersControl>
 
-           {cPorts && (isClustered ? <MarkerClusterGroup>{handleShowPorts(cPortJsonData)}</MarkerClusterGroup> :handleShowPorts(cPortJsonData)) }
+           {(cPorts && zoom > 2) && (isClustered ? <MarkerClusterGroup>{handleShowPorts(cPortJsonData)}</MarkerClusterGroup> :handleShowPorts(cPortJsonData)) }
 
            {airPorts && (isClustered ? <MarkerClusterGroup>{handleShowPorts(airPortJsonData)}</MarkerClusterGroup> :handleShowPorts(airPortJsonData)) }
 
@@ -280,12 +284,12 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
                     <CircleMarker center={sea.path.slice(-1)[0]} radius={3} fillColor='#000d37' weight={3}/>
                 </>);
             })}
-            {(curLoc && curLoc.length > 0) && <>
-                {curLoc.map((point) => {
-                    return <CircleMarker center={point} radius={7} fillColor='#000d37' color='cyan' weight={5}/>
+            {(zoom > 2 && curLoc && curLoc.length > 0 ) && <>
+                {curLoc.map(({coordinates}) => {
+                    return <CircleMarker center={coordinates} radius={7} fillColor='#000d37' color='cyan' weight={5}/>
                 })}
             </>}
-            {seaRouteData && seaRouteData.length > 1 && <>
+            {seaRouteData && seaRouteData.length > 0 && <>
                 {seaRouteData.map((route) => {
                     return route && route.length > 1 ? <Polyline pathOptions={{color:'#000d37',weight:1}} positions={route}/> : null;
                 })}
@@ -297,3 +301,27 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
 }
 
 export default Map;
+
+
+
+
+
+// console.log(getLeafletIcon(shipIcon, [32, 64], [32, 64]), 'icon');
+			// const line = L.polyline(
+			// 	[
+			// 		[18.6851, 73.94136],
+			// 		[18.68576, 73.94149],
+			// 		[18.68649, 173.94165],
+			// 	],
+			// 	{
+			// 		color  : '#02929b',
+			// 		weight : 1.5,
+			// 	},
+			// ).addTo(map);
+
+			// const animatedMarker = L.animatedMarker(line.getLatLngs(), {
+			// 	autoStart : true,
+			// 	icon      : getLeafletIcon(IcMLocation, [32, 64], [32, 64]),
+			// });
+
+			// map.addLayer(animatedMarker);

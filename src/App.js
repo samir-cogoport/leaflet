@@ -7,7 +7,7 @@ import {Box,Switch,FormControlLabel,Button} from '@mui/material'
 import seaRoutes from './data/seaRoutes.json'
 const style = {display:"flex",alignItems:'flex-end',justifyContent:'flex-end',height:'8vh',padding:'1vh',marginRight:'5vw',gap:'1rem'};
 
-const url = 'https://1c1e-103-143-39-118.in.ngrok.io/';
+const url = 'https://5612-103-143-39-118.in.ngrok.io/grid_routes';
 function App() {
   const [alertInfo, setAlertInfo] = useState({});
   const [showCPorts, setShowCPorts] = useState(false);
@@ -29,23 +29,23 @@ function App() {
   //   else setIsDeveloperMode(null);
   // }
   // const handleSave = () => {
-  //   const element = document.createElement("a");
-  //   const textFile = new Blob([JSON.stringify(isDeveloperMode)], {type: 'text/plain'}); 
-  //   element.href = URL.createObjectURL(textFile);
-  //   element.download = `customRoute${new Date()}.txt`;
-  //   document.body.appendChild(element); 
-  //   element.click();
+    // const element = document.createElement("a");
+    // const textFile = new Blob([JSON.stringify(isDeveloperMode)], {type: 'text/plain'}); 
+    // element.href = URL.createObjectURL(textFile);
+    // element.download = `customRoute${new Date()}.txt`;
+    // document.body.appendChild(element); 
+    // element.click();
   // }
-  const getRouteData = () => {
+  const getRouteData = (params) => {
     try {
       fetch(url, {
         "method": "POST",
         "headers":{"accept":"application/json",
         "content-type":"application/json"},
-        "body": JSON.stringify({points: curLoc}),
+        "body": JSON.stringify({points: params}),
       })
       .then(response => response.json())
-      .then(data => setSeaRouteData((prev) => ([...prev,data?.routes])))
+      .then(data => setSeaRouteData((prev) => ([...prev,data?.grid_routes])))
       .catch(err => console.log(err))
     }
     catch (e){
@@ -56,7 +56,10 @@ function App() {
     if(curLoc.length < 2) {
       setAlertInfo({text:"Please choose at least 2 routes",severity:"warning",duration:1000})
     }
-    else getRouteData();
+    else {
+      const params = curLoc.map(({name}) => name);
+      getRouteData(params);
+    };
   }
   return (
         <>
@@ -113,3 +116,12 @@ function App() {
 }
 
 export default App;
+// const animatedMarker = L.animatedMarker(data.roadFrom?.path, {
+			// 	autoStart : true,
+			// 	icon      : getMapIcon(
+			// 		,
+			// 		[32],
+			// 		[17, 34],
+			// 	),
+			// });
+			// map.addLayer(animatedMarker);
