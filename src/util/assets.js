@@ -145,5 +145,13 @@ attribution:''},
         return [point[0], point[1] - 360];
       }
     })
+  },
+  getAppropriateWeight:(zoom) => {
+    // if(zoom < 2) return 0.2;
+    // if(zoom < 4) return 0.9;
+    // if(zoom < 8) return 2;
+    // if(zoom < 12) return 2.7;
+    // if(zoom < 15) return 3.8;
+    return 1;
   }
 }

@@ -17,6 +17,7 @@ import L from 'leaflet';
 // import RoutingMachine from '../RoutingMachine';
 // import routes from '../../data/fin_sea.json';
 import routes from '../../data/uniqueRoutes.json'
+import india from '../../data/india-osm.geojson.json'
 // import 'Leaflet.TileLayer.MBTiles'
 import './styles.css';
 import shipIcon from '../../data/ic-ship.svg';
@@ -27,7 +28,8 @@ import demoRoute from '../../data/demoRoute.json'
 import Fullscreen from 'react-leaflet-fullscreen-plugin';
 import "leaflet.animatedmarker/src/AnimatedMarker";
 import {lineString, bezierSpline} from '@turf/turf';
-const {overlay,tileLayer,markerOptions} = require('../../util/assets')
+import FileLayer from '../FileLayer';
+const {overlay,tileLayer,markerOptions, getAppropriateWeight} = require('../../util/assets')
 const center = [22.366904, 77.534981];
 // const shortPath =
 // [[1.85, -78.81666666670003],
@@ -122,22 +124,23 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
     //     //     this.closePopup();
     //     //   });
     // }
-    const getPolygonName = (feature, layer) => {
-        layer.bindPopup(feature?.properties?.name_en);
-    }
+    // const getPolygonName = (feature, layer) => {
+    //     layer.bindPopup(feature?.properties?.name_en);
+    // }
     const onEachPolygonFeature =(feature, layer)=> {
           layer.setStyle({
             // fillColor: '#eb4034',
-            weight: 1,
-            // color: '#eb4034',
+            weight: zoom > 5 ? 2 :  1,
+            color: '#c4b3c0',
             fillOpacity: 0,
           });
-        layer.on('mouseover', function (e) {
-        L.DomEvent.stopPropagation(e);
-          getPolygonName(feature, layer);
-          this.openPopup();
-        });
+        // layer.on('mouseover', function (e) {
+        // L.DomEvent.stopPropagation(e);
+        //   getPolygonName(feature, layer);
+        //   this.openPopup();
+        // });
     };
+
     const pointToLayer = (feature, latlng) => {
         const div = document.createElement("div");
         div.innerHTML = "+Add to queue";
@@ -160,17 +163,9 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
         return <GeoJSON data={data}  pointToLayer={pointToLayer} />
     }
 
-    // const handleClickOnMap = (e) => {
-    //     setAlertInfo({text:`lat: ${e.latlng.lat}, lng: ${e.latlng.lng}`,severity:'info',duration:5000})        
-    // }
-    // const customPopup =new  L.Popup(ReactDOMServer.renderToString(<CustomPopup curLoc={curLoc}/>)); 
-    
+
     const whenCreated = (map) => {
-        // map.on('contextmenu',(e) => {
-        //     console.log('rightclick',e);
-        //     customPopup.setLatLng(e.latlng);
-        //     map.openPopup(customPopup);
-        // });
+       
         map.on('zoomend',() => {
             setZoom(map.getZoom());
         })
@@ -192,20 +187,7 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
         }
     },[showPath,map])
 
-    // useEffect(() => {
-    //     if(map) {
-    //         const key = 'plLZXQlJHwYmvtwLqzhu';
-    //         const gl = L.maplibreGL({
-    //             attribution: "\u003ca href=\"https://www.maptiler.com/copyright/\" target=\"_blank\"\u003e\u0026copy; MapTiler\u003c/a\u003e \u003ca href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\"\u003e\u0026copy; OpenStreetMap contributors\u003c/a\u003e",
-    //             style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${key}`
-    //         });
-    //         gl.addTo(map);
-    //             //     mb.addTo(map);
-    //             // mb.on('databaseloaded', function(ev) {
-    //             //     console.info('MBTiles DB loaded', ev);
-    //             // });
-    //     }
-    // },[map]);
+    
    useEffect(() => {
     if(seaRouteData.length > 0 && map) {
         const curve = bezierSpline(lineString(seaRouteData.slice(-1)[0]));
@@ -213,6 +195,21 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
         L.polyline(route,{color:'cyan',weight:3}).addTo(map);
     }
    },[map,seaRouteData])
+   
+   useEffect(() => {
+    const indiaPoly  = L.geoJson(india, {
+        style:{
+              // fillColor: '#eb4034',
+              weight: getAppropriateWeight(zoom),
+              color: '#c4b3c0',
+              fillOpacity: 0,
+            }
+    });
+    if(map) {
+        indiaPoly.addTo(map);
+        return () =>  map.removeLayer(indiaPoly);
+    }
+   },[zoom])
     console.log(zoom,'zoom');
     return (
         <MapContainer
@@ -221,11 +218,12 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
             whenCreated={whenCreated}
             whenReady={() => setAlertInfo({text:"Map is ready!!",severity:"success",duration:500})}
             // fullscreenControl={true}
+            bounceAtZoomLimits={true}
             center={center}
             zoom={5}
             scrollWheelZoom={true}
-            minZoom={1}
-            maxZoom={19}
+            // minZoom={1}
+            // maxZoom={19}
         >
             <ZoomControl position={'topright'} />
             <LayersControl position="topright">
@@ -262,7 +260,7 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
 
            {airPorts && (isClustered ? <MarkerClusterGroup>{handleShowPorts(airPortJsonData)}</MarkerClusterGroup> :handleShowPorts(airPortJsonData)) }
 
-           {countries && <GeoJSON data={countriesJson} onEachFeature={onEachPolygonFeature} weight={1} /> }
+           {/* {countries && <GeoJSON data={india} onEachFeature={onEachPolygonFeature} weight={1} /> } */}
            {/* {(countries && data) ? (Object.values(data || {})).map((countryJson) => {
             return <GeoJSON data={countryJson} onEachFeature={onEachPolygonFeature} weight={1} />
            }) :null} */}
@@ -300,12 +298,12 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
             }
             <Fullscreen />
             {(cPorts && zoom > 2) && (isClustered ? <MarkerClusterGroup>{handleShowPorts(cPortJsonData)}</MarkerClusterGroup> :handleShowPorts(cPortJsonData)) }
+            <FileLayer/>
         </MapContainer>
     );
 }
 
 export default Map;
-
 
 
 
@@ -329,3 +327,31 @@ export default Map;
 			// });
 
 			// map.addLayer(animatedMarker);
+
+            // useEffect(() => {
+    //     if(map) {
+    //         const key = 'plLZXQlJHwYmvtwLqzhu';
+    //         const gl = L.maplibreGL({
+    //             attribution: "\u003ca href=\"https://www.maptiler.com/copyright/\" target=\"_blank\"\u003e\u0026copy; MapTiler\u003c/a\u003e \u003ca href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\"\u003e\u0026copy; OpenStreetMap contributors\u003c/a\u003e",
+    //             style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${key}`
+    //         });
+    //         gl.addTo(map);
+    //             //     mb.addTo(map);
+    //             // mb.on('databaseloaded', function(ev) {
+    //             //     console.info('MBTiles DB loaded', ev);
+    //             // });
+    //     }
+    // },[map]);
+
+
+        // const handleClickOnMap = (e) => {
+    //     setAlertInfo({text:`lat: ${e.latlng.lat}, lng: ${e.latlng.lng}`,severity:'info',duration:5000})        
+    // }
+    // const customPopup =new  L.Popup(ReactDOMServer.renderToString(<CustomPopup curLoc={curLoc}/>)); 
+    
+
+     // map.on('contextmenu',(e) => {
+        //     console.log('rightclick',e);
+        //     customPopup.setLatLng(e.latlng);
+        //     map.openPopup(customPopup);
+        // });
