@@ -6,7 +6,7 @@ import Message from "./components/Message";
 import {Box,Switch,FormControlLabel,Button} from '@mui/material'
 import seaRoutes from './data/seaRoutes.json'
 const style = {display:"flex",alignItems:'flex-end',justifyContent:'flex-end',height:'8vh',padding:'1vh',marginRight:'5vw',gap:'1rem'};
-
+const {getRealPath} = require('./util/assets')
 const url = 'https://5612-103-143-39-118.in.ngrok.io/grid_routes';
 function App() {
   const [alertInfo, setAlertInfo] = useState({});
@@ -18,7 +18,6 @@ function App() {
   const [showCRoutes, setShowCRoutes] = useState(false);
   const [curLoc, setCurLoc] = useState([]);
   const [seaRouteData, setSeaRouteData] = useState([]);
-
 
   // const [isDeveloperMode, setIsDeveloperMode] = useState(false);
 
@@ -45,7 +44,7 @@ function App() {
         "body": JSON.stringify({points: params}),
       })
       .then(response => response.json())
-      .then(data => setSeaRouteData((prev) => ([...prev,data?.grid_routes])))
+      .then(data => setSeaRouteData((prev) => ([...prev,getRealPath(data?.grid_routes)])))
       .catch(err => console.log(err))
     }
     catch (e){

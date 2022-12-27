@@ -4,7 +4,6 @@ import ReactDOMServer from "react-dom/server";
 import 'maplibre-gl';
 import '@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl';
 import LocationButton from '../LocationButton';
-import { Button } from '@mui/material';
 import cPortJsonData from '../../data/World_Port_Index+(1)+(1).geojson.json';
 // import postalCode from '../../data/geonames-postal-code.geojson.json'
 import airPortJsonData from '../../data/features.json'
@@ -16,7 +15,6 @@ import 'react-leaflet-markercluster/dist/styles.min.css';
 // import countries from '../../data/countries.geojson.json'
 import L from 'leaflet';
 // import RoutingMachine from '../RoutingMachine';
-import Card from '../Card';
 // import routes from '../../data/fin_sea.json';
 import routes from '../../data/uniqueRoutes.json'
 // import 'Leaflet.TileLayer.MBTiles'
@@ -29,7 +27,7 @@ import demoRoute from '../../data/demoRoute.json'
 import Fullscreen from 'react-leaflet-fullscreen-plugin';
 import "leaflet.animatedmarker/src/AnimatedMarker";
 import {lineString, bezierSpline} from '@turf/turf';
-const {overlay,tileLayer,markerOptions,getMidPoint} = require('../../util/assets')
+const {overlay,tileLayer,markerOptions} = require('../../util/assets')
 const center = [22.366904, 77.534981];
 // const shortPath =
 // [[1.85, -78.81666666670003],
@@ -262,8 +260,6 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
             })}
             </LayersControl>
 
-           {(cPorts && zoom > 2) && (isClustered ? <MarkerClusterGroup>{handleShowPorts(cPortJsonData)}</MarkerClusterGroup> :handleShowPorts(cPortJsonData)) }
-
            {airPorts && (isClustered ? <MarkerClusterGroup>{handleShowPorts(airPortJsonData)}</MarkerClusterGroup> :handleShowPorts(airPortJsonData)) }
 
            {countries && <GeoJSON data={countriesJson} onEachFeature={onEachPolygonFeature} weight={1} /> }
@@ -303,6 +299,7 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
             </>
             }
             <Fullscreen />
+            {(cPorts && zoom > 2) && (isClustered ? <MarkerClusterGroup>{handleShowPorts(cPortJsonData)}</MarkerClusterGroup> :handleShowPorts(cPortJsonData)) }
         </MapContainer>
     );
 }

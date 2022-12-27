@@ -137,5 +137,13 @@ attribution:''},
 
     return [midpointY, midpointX];
 
+  },
+  getRealPath: (route) => {
+    return route.map((point,idx) => {
+      if(!idx || point[1] - route[idx-1][1] < 270) return point;
+      else {
+        return [point[0], point[1] - 360];
+      }
+    })
   }
 }
