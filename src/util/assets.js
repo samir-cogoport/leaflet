@@ -147,11 +147,11 @@ attribution:''},
     })
   },
   getAppropriateWeight:(zoom) => {
-    // if(zoom < 2) return 0.2;
-    // if(zoom < 4) return 0.9;
-    // if(zoom < 8) return 2;
-    // if(zoom < 12) return 2.7;
-    // if(zoom < 15) return 3.8;
-    return 1;
+    if(zoom < 2) return 0.2;
+    if(zoom < 4) return 0.5;
+    if(zoom < 8) return 1.2;
+    if(zoom < 12) return 2.4;
+    if(zoom < 15) return 3.6;
+    return 5;
   }
 }

@@ -6,8 +6,16 @@ import Message from "./components/Message";
 import {Box,Switch,FormControlLabel,Button} from '@mui/material'
 import seaRoutes from './data/seaRoutes.json'
 const style = {display:"flex",alignItems:'flex-end',justifyContent:'flex-end',height:'8vh',padding:'1vh',marginRight:'5vw',gap:'1rem'};
-const {getRealPath} = require('./util/assets')
-const url = 'https://5612-103-143-39-118.in.ngrok.io/grid_routes';
+
+const getRealPath = (route) => {
+  let rotate = false;
+  return route.map((point,idx) => {
+    if(idx && (point[1]-route[idx-1][1]) > 270 ) rotate = true;
+    return rotate ? [point[0],point[1]-360] : point;
+  })
+
+}
+const url = 'https://96e5-2409-4040-40d-66e0-1d58-dab3-2a78-d443.in.ngrok.io/sea_route';
 function App() {
   const [alertInfo, setAlertInfo] = useState({});
   const [showCPorts, setShowCPorts] = useState(false);
@@ -56,7 +64,7 @@ function App() {
       setAlertInfo({text:"Please choose at least 2 routes",severity:"warning",duration:1000})
     }
     else {
-      const params = curLoc.map(({name}) => name);
+      const params = curLoc.map(({fid}) => fid);
       getRouteData(params);
     };
   }

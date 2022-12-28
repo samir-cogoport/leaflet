@@ -23,7 +23,7 @@ import './styles.css';
 import shipIcon from '../../data/ic-ship.svg';
 import truckIcon from '../../data/ic-truck.svg';
 import air from '../../data/ic-air.svg';
-import "leaflet.motion/dist/leaflet.motion.js";
+import "leaflet.motion/dist/leaflet.motion.min.js";
 import demoRoute from '../../data/demoRoute.json'
 import Fullscreen from 'react-leaflet-fullscreen-plugin';
 import "leaflet.animatedmarker/src/AnimatedMarker";
@@ -106,7 +106,7 @@ const sqGroup = L.motion.seq([
 const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoutes,curLoc, setCurLoc,seaRouteData}) => {
     const [map, setMap] = useState(null);
     const [zoom, setZoom] = useState(5);
-    console.log(curLoc, 'curloc');
+    console.log(seaRouteData, 'curloc');
     // const mb = L.tileLayer.mbTiles('../../data/countries-raster.mbtiles', {
 	// 	minZoom: 0,
 	// 	maxZoom: 6
@@ -116,13 +116,12 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
     //   }
 
     // const onEachPortFeature = (feature, layer) => {
-    //     layer.on('click', function (e) {
-    //         getPortDetails(feature, layer);
+    //     layer.on('mouseover', function (e) {
     //         this.openPopup();
     //       });
-    //     //   layer.on('mouseout', function () {
-    //     //     this.closePopup();
-    //     //   });
+    //       layer.on('mouseout', function () {
+    //         this.closePopup();
+    //       });
     // }
     // const getPolygonName = (feature, layer) => {
     //     layer.bindPopup(feature?.properties?.name_en);
@@ -143,24 +142,26 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
 
     const pointToLayer = (feature, latlng) => {
         const div = document.createElement("div");
-        div.innerHTML = "+Add to queue";
+        div.innerHTML = `+ ${feature.properties.PORT_NAME}`;
         div.className = 'add-to-queue';
         div.onclick = () =>  {
-            setCurLoc((prev) => ([...prev, {name:feature.properties.PORT_NAME,coordinates:[latlng.lat,latlng.lng]}]))
-            map.closePopup();
+            setCurLoc((prev) => ([...prev, {fid:feature.properties.FID,coordinates:[latlng.lat,latlng.lng]}]))
         }
-        return L.circleMarker(latlng, {
+        const marker =  L.circleMarker(latlng, {
             fillColor:feature?.properties?.PORT_NAME ? '#000d37' : '#ff5722',
             color:'#f6f7f9',
             weight:1,
             radius:6,
             fillOpacity:0.95,
-        }).bindPopup(div)
-
+        }).bindPopup(div, {closeButton:false,})
+        marker.on('mouseover', function (e){
+            this.openPopup();
+        })
+        return marker;
     }
 
     const handleShowPorts = (data) => {
-        return <GeoJSON data={data}  pointToLayer={pointToLayer} />
+        return <GeoJSON data={data} pointToLayer={pointToLayer} />
     }
 
 
@@ -190,9 +191,11 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
     
    useEffect(() => {
     if(seaRouteData.length > 0 && map) {
-        const curve = bezierSpline(lineString(seaRouteData.slice(-1)[0]));
-        const route =curve.geometry.coordinates;
-        L.polyline(route,{color:'cyan',weight:3}).addTo(map);
+        // const curve = bezierSpline(lineString(seaRouteData.slice(-1)[0]));
+        // const route =curve.geometry.coordinates;
+        // L.polyline(route,{color:'cyan',weight:3}).addTo(map);
+        const line = L.polyline(seaRouteData.slice(-1)[0]);
+        map.fitBounds(line.getBounds());
     }
    },[map,seaRouteData])
    
@@ -203,10 +206,12 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
               weight: getAppropriateWeight(zoom),
               color: '#c4b3c0',
               fillOpacity: 0,
+              zIndex:700,
             }
     });
     if(map) {
         indiaPoly.addTo(map);
+        indiaPoly.bringToBack();
         return () =>  map.removeLayer(indiaPoly);
     }
    },[zoom])
@@ -284,7 +289,7 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
                     <CircleMarker center={sea.path.slice(-1)[0]} radius={3} fillColor='#000d37' weight={3}/>
                 </>);
             })}
-            {(zoom > 2 && curLoc && curLoc.length > 0 ) && <>
+            {(curLoc && curLoc.length > 0 ) && <>
                 {curLoc.map(({coordinates}) => {
                     return <CircleMarker center={coordinates} radius={7} fillColor='#000d37' color='cyan' weight={5}/>
                 })}
@@ -299,6 +304,7 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
             <Fullscreen />
             {(cPorts && zoom > 2) && (isClustered ? <MarkerClusterGroup>{handleShowPorts(cPortJsonData)}</MarkerClusterGroup> :handleShowPorts(cPortJsonData)) }
             <FileLayer/>
+            <Marker position={[43.2500000000001, -79.85]}/>
         </MapContainer>
     );
 }

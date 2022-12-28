@@ -3,15 +3,9 @@ import L from "leaflet";
 import { useMap } from "react-leaflet";
 import togeojson from "togeojson";
 import fileLayer from "leaflet-filelayer";
-import shipIcon from '../data/ic-ship.svg';
-
 
 fileLayer(null, L, togeojson);
-const shippingPathIcon = new L.Icon({
-    iconUrl: shipIcon,
-    iconSize: [32, 32], 
-    iconAnchor: [16, 34], 
-  });
+
 const style = {
   color: "red",
   opacity: 1.0,
@@ -30,11 +24,15 @@ export default function FileLayer() {
       layerOptions: {
         style: style,
         pointToLayer: function (data, latlng) {
-          return L.circleMarker(latlng, { style: style,icon:shippingPathIcon  });
+          return L.circleMarker(latlng, { style: style });
         }
       }
     });
     control.addTo(map);
+    control.loader.on("data:loaded", function (e) {
+      var layer = e.layer;
+      console.log(layer);
+    });
   }, [map]);
 
   return null;
