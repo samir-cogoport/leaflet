@@ -4,7 +4,7 @@ import {React,useState,useEffect} from "react";
 import Map from './components/Map'
 import Message from "./components/Message";
 import {Box,Switch,FormControlLabel,Button} from '@mui/material'
-import seaRoutes from './data/seaRoutes.json'
+import ports from './data/World_Port_Index+(1)+(1).geojson.json'
 const style = {display:"flex",alignItems:'flex-end',justifyContent:'flex-end',height:'8vh',padding:'1vh',marginRight:'5vw',gap:'1rem'};
 
 const getRealPath = (route) => {
@@ -35,14 +35,22 @@ function App() {
   //   }
   //   else setIsDeveloperMode(null);
   // }
-  // const handleSave = () => {
-    // const element = document.createElement("a");
-    // const textFile = new Blob([JSON.stringify(isDeveloperMode)], {type: 'text/plain'}); 
-    // element.href = URL.createObjectURL(textFile);
-    // element.download = `customRoute${new Date()}.txt`;
-    // document.body.appendChild(element); 
-    // element.click();
-  // }
+  const handleSave = () => {
+    const modifiedPorts = ports.features.map((item) => {
+      return {
+        position:item.geometry.coordinates,
+        name: item.properties.PORT_NAME,
+        country: item.properties.COUNTRY,
+        id:item.properties.FID,
+      }
+    })
+    const element = document.createElement("a");
+    const textFile = new Blob([JSON.stringify(modifiedPorts)], {type: 'text/plain'}); 
+    element.href = URL.createObjectURL(textFile);
+    element.download = 'minimisedPorts.txt';
+    document.body.appendChild(element); 
+    element.click();
+  }
   const getRouteData = (params) => {
     try {
       fetch(url, {
@@ -68,6 +76,7 @@ function App() {
       getRouteData(params);
     };
   }
+  // handleSave();
   return (
         <>
         <Box sx={style}>

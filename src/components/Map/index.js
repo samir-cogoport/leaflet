@@ -1,4 +1,4 @@
-import {React, useState,useEffect} from 'react';
+import {React, useState,useEffect, useRef,useMemo} from 'react';
 import { MapContainer, TileLayer ,LayersControl,ScaleControl,ZoomControl,GeoJSON,Polyline, CircleMarker, Marker} from 'react-leaflet';
 import ReactDOMServer from "react-dom/server";
 import 'maplibre-gl';
@@ -29,6 +29,9 @@ import Fullscreen from 'react-leaflet-fullscreen-plugin';
 import "leaflet.animatedmarker/src/AnimatedMarker";
 import {lineString, bezierSpline} from '@turf/turf';
 import FileLayer from '../FileLayer';
+// import 'leaflet.vectorgrid/dist/Leaflet.VectorGrid.bundled'
+
+
 const {overlay,tileLayer,markerOptions, getAppropriateWeight} = require('../../util/assets')
 const center = [22.366904, 77.534981];
 // const shortPath =
@@ -102,30 +105,76 @@ const sqGroup = L.motion.seq([
     roadFrom, shippingPath, roadTo
 ]);
 
+const getColor = ['red', 'green', 'blue','yellow','voilet', 'black']
+
+function customMarkerIcon(color) {
+    const svgTemplate = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" class="marker">
+        <path fill-opacity=".25" d="M16 32s1.427-9.585 3.761-12.025c4.595-4.805 8.685-.99 8.685-.99s4.044 3.964-.526 8.743C25.514 30.245 16 32 16 32z"/>
+        <path fill="#${color}" stroke="#fff" d="M15.938 32S6 17.938 6 11.938C6 .125 15.938 0 15.938 0S26 .125 26 11.875C26 18.062 15.938 32 15.938 32zM16 6a4 4 0 100 8 4 4 0 000-8z"/>
+      </svg>`;
+  
+    return new L.DivIcon({
+      className: "test",
+      html: svgTemplate,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [7, -16],
+    });
+  }
 
 const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoutes,curLoc, setCurLoc,seaRouteData}) => {
     const [map, setMap] = useState(null);
     const [zoom, setZoom] = useState(5);
-    console.log(seaRouteData, 'curloc');
-    // const mb = L.tileLayer.mbTiles('../../data/countries-raster.mbtiles', {
-	// 	minZoom: 0,
-	// 	maxZoom: 6
-	// })
-    // const getPortDetails = (feature, layer) => {
-    //     layer.bindPopup(ReactDOMServer.renderToString(<Button >+Add to queue</Button>)).click();
-    //   }
+   
 
-    // const onEachPortFeature = (feature, layer) => {
-    //     layer.on('mouseover', function (e) {
-    //         this.openPopup();
-    //       });
-    //       layer.on('mouseout', function () {
-    //         this.closePopup();
-    //       });
-    // }
-    // const getPolygonName = (feature, layer) => {
-    //     layer.bindPopup(feature?.properties?.name_en);
-    // }
+    const [selectedLoc, setSelectedLoc] = useState({origin:[19.45348964003114, 73.64449024200441],  destination: [20.41311490749259, 73.39234113693239]});
+    const [road, setRoad]  = useState([]);
+    const originRef = useRef(null);
+    const destinationRef = useRef(null);
+    const getRouteData = () => {
+        try {
+          fetch('https://fa5c-103-143-39-118.in.ngrok.io/road_route', {
+            "method": "POST",
+            "headers":{"accept":"application/json",
+            "content-type":"application/json"},
+            "body": JSON.stringify(selectedLoc),
+          })
+          .then(response => response.json())
+          .then(data => setRoad(data?.road_route || []))
+          .catch(err => setRoad([]))
+        }
+        catch (e){
+          console.log(e);
+        }
+    }
+    const originHandler= useMemo(
+        () => ({
+          dragend() {
+            const marker = originRef.current
+            if (marker != null) {
+            const pos = marker.getLatLng();
+              setSelectedLoc((prev) => ({...prev, origin:Object.values(pos)}));
+            }
+          },
+        }),
+        [],
+    )
+    const destinationHandler= useMemo(
+        () => ({
+          dragend() {
+            const marker = destinationRef.current
+            if (marker != null) {
+                const pos = marker.getLatLng();
+                setSelectedLoc((prev) => ({...prev, destination:Object.values(pos)}))            }
+          },
+        }),
+        [],
+    )
+    useEffect(() => {
+        getRouteData();
+    },[JSON.stringify(selectedLoc)])
+
     const onEachPolygonFeature =(feature, layer)=> {
           layer.setStyle({
             // fillColor: '#eb4034',
@@ -164,9 +213,7 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
         return <GeoJSON data={data} pointToLayer={pointToLayer} />
     }
 
-
-    const whenCreated = (map) => {
-       
+    const whenCreated = (map) => {        
         map.on('zoomend',() => {
             setZoom(map.getZoom());
         })
@@ -215,7 +262,27 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
         return () =>  map.removeLayer(indiaPoly);
     }
    },[zoom])
-    console.log(zoom,'zoom');
+    console.log(road,'road');
+
+    // useEffect(() => {
+    //     if(map) {
+    //         L.vectorGrid.protobuf("https://free-{s}.tilehosting.com/data/v3/{z}/{x}/{y}.pbf.pict?key=plLZXQlJHwYmvtwLqzhu", {
+    //             vectorTileLayerStyles: {},
+                
+    //         }).addTo(map);  
+    //     }
+    // },[map])
+    useEffect(() => {
+        if(map) {
+            originRef.current.on('moved', (e) => {
+                console.log(e,'eee')
+                setSelectedLoc((prev) => ({...prev, origin:[e?.latlng?.lat, e?.latlng?.lng]}))
+            })
+            destinationRef.current.on('moved', (e) => {
+                setSelectedLoc((prev) => ({...prev, destination:[e?.latlng?.lat, e?.latlng?.lng]}))
+            })
+        }
+    },[map])
     return (
         <MapContainer
             preferCanvas={true}
@@ -304,7 +371,17 @@ const Map = ({setAlertInfo,cPorts,countries,airPorts,isClustered,showPath,cRoute
             <Fullscreen />
             {(cPorts && zoom > 2) && (isClustered ? <MarkerClusterGroup>{handleShowPorts(cPortJsonData)}</MarkerClusterGroup> :handleShowPorts(cPortJsonData)) }
             <FileLayer/>
-            <Marker position={[43.2500000000001, -79.85]}/>
+            
+            <Marker 
+            eventHandlers={originHandler}
+                ref={originRef} position={selectedLoc.origin} icon={customMarkerIcon('00FF00')} draggable 
+            />
+            <Marker 
+            eventHandlers={destinationHandler}
+                ref={destinationRef} position={selectedLoc.destination} icon={customMarkerIcon('FF0000')} draggable
+            />
+            <Polyline positions={road} pathOptions={{color: getColor[0] }} />
+           
         </MapContainer>
     );
 }
